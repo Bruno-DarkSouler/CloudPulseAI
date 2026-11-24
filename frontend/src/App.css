@@ -629,3 +629,55 @@
     font-size: 9px;
   }
 }
+
+
+/* Estados de conexión y carga de anomalías */
+.status-dot-error {
+  background: #ff7373;
+  box-shadow: 0 0 8px rgba(255, 115, 115, 0.45);
+}
+
+.anomaly-state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 14px;
+  border: 1px solid #26374d;
+  border-radius: 9px;
+  color: #9aadc3;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.anomaly-error {
+  align-items: flex-start;
+  flex-direction: column;
+  border-color: #633c49;
+  color: #ffaaaa;
+}
+
+.anomaly-error span {
+  color: #c18d98;
+}
+
+.anomaly-info small {
+  display: block;
+  margin-top: 6px;
+  color: #71869f;
+  font-size: 9px;
+}
+
+.anomaly-source {
+  margin-top: 10px;
+  color: #71869f;
+  font-size: 9px;
+}
+
+.loading-spinner {
+  animation: anomaly-spin 1s linear infinite;
+}
+
+@keyframes anomaly-spin {
+  to { transform: rotate(360deg); }
+}

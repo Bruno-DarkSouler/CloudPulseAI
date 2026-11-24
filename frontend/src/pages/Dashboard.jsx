@@ -5,32 +5,63 @@ import {
   AlertTriangle,
   RefreshCw,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import Sidebar from "../components/Sidebar";
 import StatCard from "../components/StatCard";
 import CloudSelector from "../components/CloudSelector";
 import CostChart from "../components/CostChart";
-
-import "../App.css"
-
-import {
-  AnomalyCard,
-  InsightCard,
-} from "../components/InsightCard";
-
+import { AnomalyCard, InsightCard } from "../components/InsightCard";
 import { mockData } from "../data/mockData";
+import { getAwsAnomalies } from "../services/awsService";
 
-import { useState } from "react";
+import "../App.css";
 
 export default function Dashboard() {
   const [selectedCloud, setSelectedCloud] = useState("AWS");
+  const [awsAnomalies, setAwsAnomalies] = useState([]);
+  const [anomalyLoading, setAnomalyLoading] = useState(false);
+  const [anomalyError, setAnomalyError] = useState("");
+  const [anomalySource, setAnomalySource] = useState("");
 
   const data = mockData[selectedCloud];
+  const displayedAnomalies =
+    selectedCloud === "AWS" ? awsAnomalies : data.anomalies;
+
+  useEffect(() => {
+    if (selectedCloud !== "AWS") return;
+
+    let active = true;
+
+    async function loadAnomalies() {
+      setAnomalyLoading(true);
+      setAnomalyError("");
+
+      try {
+        const result = await getAwsAnomalies();
+        if (!active) return;
+
+        setAwsAnomalies(result.anomalies);
+        setAnomalySource(result.source);
+      } catch (error) {
+        if (!active) return;
+        setAnomalyError(error.message || "Ocurrió un error inesperado.");
+        setAnomalySource("");
+      } finally {
+        if (active) setAnomalyLoading(false);
+      }
+    }
+
+    loadAnomalies();
+
+    return () => {
+      active = false;
+    };
+  }, [selectedCloud]);
 
   const variation = (
     ((data.monthlyCost - data.previousCost) / data.previousCost) * 100
   ).toFixed(1);
-
   const increase = Number(variation) > 0;
 
   const currency = (value) =>
@@ -39,6 +70,13 @@ export default function Dashboard() {
       currency: "USD",
       maximumFractionDigits: 0,
     }).format(value);
+
+  const anomalyCount =
+    selectedCloud === "AWS" && anomalyError
+      ? "—"
+      : selectedCloud === "AWS" && anomalyLoading
+        ? "..."
+        : displayedAnomalies.length;
 
   return (
     <div className="app-layout">
@@ -53,10 +91,15 @@ export default function Dashboard() {
 
           <div className="topbar-right">
             <span className="live-indicator">
-              <span className="status-dot" />
-              Datos simulados
+              <span className={`status-dot ${selectedCloud === "AWS" && anomalyError ? "status-dot-error" : ""}`} />
+              {selectedCloud === "AWS"
+                ? anomalyLoading
+                  ? "Conectando con AWS..."
+                  : anomalyError
+                    ? "AWS desconectado"
+                    : "AWS · API conectada"
+                : "Datos simulados"}
             </span>
-
             <div className="avatar">BF</div>
           </div>
         </header>
@@ -106,10 +149,10 @@ export default function Dashboard() {
 
           <StatCard
             title="Anomalías"
-            value={data.anomalies.length}
+            value={anomalyCount}
             description="Eventos detectados"
             icon={AlertTriangle}
-            trend="Requieren revisión"
+            trend={anomalyError ? "API no disponible" : "Requieren revisión"}
             positive={false}
           />
         </section>
@@ -120,11 +163,7 @@ export default function Dashboard() {
           <div className="side-panels">
             <div className="panel budget-panel">
               <h3>Resumen presupuestario</h3>
-
-              <span className="budget-label">
-                Gasto proyectado
-              </span>
-
+              <span className="budget-label">Gasto proyectado</span>
               <h2>{currency(data.projectedCost)}</h2>
 
               <div className="budget-progress">
@@ -138,19 +177,15 @@ export default function Dashboard() {
                 />
               </div>
 
-              <p>
-                Gasto actual: {currency(data.monthlyCost)}
-              </p>
+              <p>Gasto actual: {currency(data.monthlyCost)}</p>
             </div>
 
             <div className="panel cloud-panel">
               <h3>Proveedor seleccionado</h3>
-
               <div className="cloud-provider">
                 <div className="provider-icon">
                   <Server size={23} />
                 </div>
-
                 <div>
                   <strong>{selectedCloud}</strong>
                   <span>Infraestructura cloud</span>
@@ -161,7 +196,12 @@ export default function Dashboard() {
         </section>
 
         <section className="bottom-grid">
-          <AnomalyCard anomalies={data.anomalies} />
+          <AnomalyCard
+            anomalies={displayedAnomalies}
+            loading={selectedCloud === "AWS" && anomalyLoading}
+            error={selectedCloud === "AWS" ? anomalyError : ""}
+            source={selectedCloud === "AWS" ? anomalySource : "Datos simulados"}
+          />
           <InsightCard insights={data.insights} />
         </section>
 
@@ -169,7 +209,7 @@ export default function Dashboard() {
           <span>CloudPulse AI © 2026</span>
           <span>
             <RefreshCw size={13} />
-            Entorno de demostración
+            {selectedCloud === "AWS" ? "AWS API + datos de demostración" : "Entorno de demostración"}
           </span>
         </footer>
       </main>

@@ -14,3 +14,11 @@ The React Compiler is not enabled on this template because of its impact on dev 
 ## Expanding the Oxlint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+
+## Integración local de anomalías AWS
+
+Configurar `VITE_AWS_API_URL` en `.env` (por ejemplo `http://localhost:8000`),
+iniciar el servidor local del backend y luego ejecutar `pnpm dev`. El dashboard
+consulta `GET /api/v1/anomalies?cloud=AWS` al seleccionar AWS. Para producción,
+configurar `VITE_AWS_API_URL` con la URL base de API Gateway en las variables
+de entorno del hosting. La API debe permitir el origen del frontend mediante CORS.

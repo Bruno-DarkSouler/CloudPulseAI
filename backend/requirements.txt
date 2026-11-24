@@ -1,0 +1,16 @@
+numpy
+pandas
+scikit-learn
+joblib
+
+openai
+
+boto3
+
+google-cloud-firestore
+google-cloud-monitoring
+
+functions-framework
+
+python-dotenv
+pydantic
